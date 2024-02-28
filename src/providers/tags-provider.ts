@@ -90,14 +90,12 @@ export const createTagsProvider = (data: string[]) =>
         document: vscode.TextDocument,
         position: vscode.Position
       ) {
-        // get prev charactor
-        const prevChar = document.getText(
-          new vscode.Range(
-            new vscode.Position(position.line, position.character - 1),
-            position
-          )
-        );
-        // if prev charactor is "<" then no need to add "<" to the tag
+        // get line last char
+        const prevChar = document
+          .lineAt(position.line)
+          .text.charAt(position.character - 1);
+
+        // if last charactor is "<" then no need to add "<" to the tag
         const prefix = prevChar === "<" ? "" : "<";
 
         return data.map((tag) => {
