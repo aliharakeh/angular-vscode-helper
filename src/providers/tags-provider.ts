@@ -2,21 +2,21 @@ import * as vscode from "vscode";
 import { readFileSync } from "fs";
 import { ComponentAndDirective } from "../entities/component-and-directive";
 import { glob } from "glob";
-import { get } from "http";
 import { getCurrentOpenedFolder } from "../utils/extension";
-import { join } from "path";
+import { commaSplit } from "../utils/string";
+import { parseAny, parsePattern } from "../utils/parsers";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Get Component Type Files from node_modules
+// Get the file paths containing the components
 //
-///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-export async function getPackegesTypeFiles(paths: string[]) {
+export async function getPackagesTypeFiles(paths: string[]) {
   const cwd = getCurrentOpenedFolder();
   const files: string[] = [];
   for (const path of paths) {
-    const globFiles = await glob(getTypeFilesGlobPattern(path), {
+    const globFiles = await glob(`node_modules/${path}/**/*.d.ts`, {
       cwd,
       absolute: true,
     });
@@ -24,44 +24,6 @@ export async function getPackegesTypeFiles(paths: string[]) {
   }
   return files;
 }
-
-function getTypeFilesGlobPattern(path: string) {
-  return `node_modules/${path}/**/*.d.ts`;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Parse Component Type Files
-//
-////////////////////////////////////////////////////////////////////////////////
-
-const COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]*?)>;/g;
-// const DIRECTIVE_PATTERN = /i0\.ɵɵDirectiveDeclaration<([\s\S]*?)>;/g;
-
-export class ComponentTypeParser {
-  public components: ComponentAndDirective[] = [];
-
-  constructor(public file: string) {
-    const content = readFileSync(this.file, "utf8");
-    this.components = this.parse(content, COMPONENT_PATTERN);
-  }
-
-  parse(content: string, pattern: RegExp) {
-    const matches = this.getMatches(content, pattern);
-    return matches.map((m) => new ComponentAndDirective(m));
-  }
-
-  getMatches(content: string, pattern: RegExp) {
-    const matches = content.matchAll(pattern);
-    return [...matches].filter(Boolean).map((m) => m[1]);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Get Local Component Files
-//
-////////////////////////////////////////////////////////////////////////////////
 
 export async function getLocalComponentsFiles() {
   return await glob("src/**/*.component.ts", {
@@ -72,11 +34,39 @@ export async function getLocalComponentsFiles() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Parse Local Component Files
+// Parse Component Files
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export class LocalComponentParser {}
+const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]*?)>;/g;
+const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]*?)\)[\s\n\t]*export/g;
+
+export function parsePackageComponents(file: string) {
+  const content = readFileSync(file, "utf8");
+  return parsePattern(content, PACKAGE_COMPONENT_PATTERN).map(
+    (m) => new ComponentAndDirective(m)
+  );
+}
+
+export function parseLocalComponents(file: string) {
+  const content = readFileSync(file, "utf8");
+  const declarations = parsePattern(content, LOCAL_COMPONENT_PATTERN);
+  return declarations.map((declaration) => {
+    const metaData = commaSplit(declaration.slice(1, -1)).reduce(
+      (acc, prop) => {
+        const [key, value] = prop.split(":").map((s) => s.trim());
+        acc[key] = parseAny(value);
+        return acc;
+      },
+      {}
+    );
+    const component = new ComponentAndDirective();
+    metaData.selector = metaData.selector?.split(",");
+    Object.assign(component, metaData);
+    console.log(component);
+    return component;
+  });
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -86,10 +76,9 @@ export class LocalComponentParser {}
 
 export function getTagList(paths: string[]) {
   const data = [];
-  getPackegesTypeFiles(paths).then((files) => {
+  getPackagesTypeFiles(paths).then((files) => {
     for (const file of files) {
-      const parser = new ComponentTypeParser(file);
-      parser.components.forEach((c) => {
+      parsePackageComponents(file).forEach((c) => {
         const selector = c.getComponentSelector();
         if (selector) {
           data.push(selector);
@@ -97,6 +86,18 @@ export function getTagList(paths: string[]) {
       });
     }
   });
+
+  getLocalComponentsFiles().then((files) => {
+    for (const file of files) {
+      parseLocalComponents(file).forEach((c) => {
+        const selector = c.getComponentSelector();
+        if (selector) {
+          data.push(selector);
+        }
+      });
+    }
+  });
+
   return data;
 }
 
