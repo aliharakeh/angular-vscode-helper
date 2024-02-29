@@ -8,7 +8,7 @@ export function activate(context: vscode.ExtensionContext) {
   //
   ////////////////////////////////////////////////////////////////////////////
 
-  const config = vscode.workspace.getConfiguration("angular-helper");
+  const config = vscode.workspace.getConfiguration("angular-vscode-helper");
   const uiComponentsPaths = config.get(
     "configuration.UIComponentsPaths"
   ) as string[];

@@ -14,12 +14,14 @@
 			"title": "Angular Vscode Helper",
 			"properties": {
 				"angular-vscode-helper.configuration.UIComponentsPaths": {
-					"scope": "application",
 					"type": "array",
 					"default": [
 						"@angular/material",
 						"@angular/cdk"
 					],
+					"items": {
+						"type": "string"
+					},
 					"description": "An array of node_moules paths that contains the components declarations of installed UI packages. It's better to provide only the directories containing the .d.ts type declaration files for quicker indexing. Any non-existent path will be ignored."
 				}
 			}

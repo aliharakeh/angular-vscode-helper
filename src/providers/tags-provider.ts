@@ -2,7 +2,6 @@ import * as vscode from "vscode";
 import { readFileSync } from "fs";
 import { ComponentAndDirective } from "../entities/component-and-directive";
 import { glob } from "glob";
-import { dirname } from "path";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -11,10 +10,11 @@ import { dirname } from "path";
 ///////////////////////////////////////////////////////////////////
 
 export async function getPackegesTypeFiles(paths: string[]) {
+  const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
   const files: string[] = [];
   for (const path of paths) {
     const globFiles = await glob(getTypeFilesGlobPattern(path), {
-      cwd: dirname(dirname(__dirname)),
+      cwd,
       absolute: true,
     });
     files.push(...globFiles);
@@ -53,6 +53,25 @@ export class ComponentTypeParser {
     return [...matches].filter(Boolean).map((m) => m[1]);
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Parse Local Component Files
+//
+////////////////////////////////////////////////////////////////////////////////
+
+// export async function getLocalComponentsFiles() {
+//   const files: string[] = [];
+//   const paths = [];
+//   for (const path of paths) {
+//     const globFiles = await glob(getTypeFilesGlobPattern(path), {
+//       cwd: dirname(dirname(__dirname)),
+//       absolute: true,
+//     });
+//     files.push(...globFiles);
+//   }
+//   return files;
+// }
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -97,7 +116,6 @@ export const createTagsProvider = (data: string[]) =>
 
         // if last charactor is "<" then no need to add "<" to the tag
         const prefix = prevChar === "<" ? "" : "<";
-
         return data.map((tag) => {
           const completionItem = new vscode.CompletionItem(
             tag,
