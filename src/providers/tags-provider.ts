@@ -2,6 +2,9 @@ import * as vscode from "vscode";
 import { readFileSync } from "fs";
 import { ComponentAndDirective } from "../entities/component-and-directive";
 import { glob } from "glob";
+import { get } from "http";
+import { getCurrentOpenedFolder } from "../utils/extension";
+import { join } from "path";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -10,7 +13,7 @@ import { glob } from "glob";
 ///////////////////////////////////////////////////////////////////
 
 export async function getPackegesTypeFiles(paths: string[]) {
-  const cwd = vscode.workspace.workspaceFolders[0].uri.fsPath;
+  const cwd = getCurrentOpenedFolder();
   const files: string[] = [];
   for (const path of paths) {
     const globFiles = await glob(getTypeFilesGlobPattern(path), {
@@ -56,22 +59,24 @@ export class ComponentTypeParser {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
+// Get Local Component Files
+//
+////////////////////////////////////////////////////////////////////////////////
+
+export async function getLocalComponentsFiles() {
+  return await glob("src/**/*.component.ts", {
+    cwd: getCurrentOpenedFolder(),
+    absolute: true,
+  });
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
 // Parse Local Component Files
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-// export async function getLocalComponentsFiles() {
-//   const files: string[] = [];
-//   const paths = [];
-//   for (const path of paths) {
-//     const globFiles = await glob(getTypeFilesGlobPattern(path), {
-//       cwd: dirname(dirname(__dirname)),
-//       absolute: true,
-//     });
-//     files.push(...globFiles);
-//   }
-//   return files;
-// }
+export class LocalComponentParser {}
 
 ////////////////////////////////////////////////////////////////////////////////
 //
