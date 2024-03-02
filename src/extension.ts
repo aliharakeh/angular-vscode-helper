@@ -1,13 +1,8 @@
 import * as vscode from "vscode";
-import {
-  createTagsProvider,
-  onDidChangeTextDocument,
-  onDidCreateFiles,
-  onDidChangeConfiguration,
-  getLocalTags,
-  getPackagesTags,
-} from "./providers/tags-provider";
+import { createTagsProvider, getLocalTags, getPackagesTags } from "./providers/tags-provider";
 import { Env, EXTENSION_NAME } from "./env";
+import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events/events";
+import { ExtensionData } from "./types/data";
 
 export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
@@ -25,19 +20,19 @@ export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
 
   // use an object to make it easy to keep the main reference when we change the inner tag lists later
-  const tags = {
+  const data: ExtensionData = {
     packagesTags: await getPackagesTags(config.get(Env("UIComponentsPaths"))),
     localTags: await getLocalTags(),
   };
 
   // Listen for configuration changes and update the tag list with the new packages ui components
-  vscode.workspace.onDidChangeConfiguration(e => onDidChangeConfiguration(e, tags, config));
+  vscode.workspace.onDidChangeConfiguration(e => onDidChangeConfiguration(e, data, config));
 
   // Listen for new component files and update the tag list with the new components
-  vscode.workspace.onDidCreateFiles(e => onDidCreateFiles(e, tags));
+  vscode.workspace.onDidCreateFiles(e => onDidCreateFiles(e, data));
 
   // Listen for component files change and update the tag list with any new component meta data
-  vscode.workspace.onDidChangeTextDocument(e => onDidChangeTextDocument(e, tags));
+  vscode.workspace.onDidChangeTextDocument(e => onDidChangeTextDocument(e, data));
 
   ////////////////////////////////////////////////////////////////////////////
   //
@@ -45,6 +40,6 @@ export async function activate(context: vscode.ExtensionContext) {
   //
   ////////////////////////////////////////////////////////////////////////////
 
-  const tagsProvider = createTagsProvider(tags);
+  const tagsProvider = createTagsProvider(data);
   context.subscriptions.push(tagsProvider);
 }
