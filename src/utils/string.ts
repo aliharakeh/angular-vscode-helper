@@ -16,10 +16,7 @@ export function commaSplit(content: string) {
       stack.push(char);
     }
     // remove the last element from the stack if the current character is the closing symbol of the last element
-    else if (
-      SYMBOLS[stack[stack.length - 1]] === char ||
-      (char === '"' && stack[stack.length - 1] === '"')
-    ) {
+    else if (SYMBOLS[stack[stack.length - 1]] === char || (char === '"' && stack[stack.length - 1] === '"')) {
       stack.pop();
     }
 
@@ -36,5 +33,5 @@ export function commaSplit(content: string) {
 }
 
 export function isKebabCase(s: string) {
-  return s.match(/^[a-z]+(-[a-z]+)*$/) !== null;
+  return s.match(/^\w+?(-\w+?)*$/) !== null;
 }

@@ -4,7 +4,7 @@ export function parseArray(s: string) {
     .trim()
     .slice(1, -1)
     .split(",")
-    .map((s) => s.trim());
+    .map(s => s.trim());
 }
 
 export function parseObject(s: string) {
@@ -15,15 +15,17 @@ export function parseObject(s: string) {
 }
 
 export function parseString(s: string) {
+  if (!s) return "";
   return s.trim().replace(/['"]/g, "");
 }
 
 export function parsePattern(content: string, pattern: RegExp) {
   const matches = content.matchAll(pattern);
-  return [...matches].filter(Boolean).map((m) => m[1]);
+  return [...matches].filter(Boolean).map(m => m[1]);
 }
 
 export function parseAny(content: string) {
+  if (!content) return "";
   switch (true) {
     case content.startsWith("{"):
       return parseObject(content);
