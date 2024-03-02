@@ -6,6 +6,8 @@ import { getCurrentOpenedFolder } from "../utils/extension";
 import { exists, getFiles } from "../utils/files";
 import { parseAny, parsePattern } from "../utils/parsers";
 import { commaSplit } from "../utils/string";
+import { debounce } from "../utils/functions";
+import { Env } from "../env";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -123,3 +125,34 @@ export function createTagsProvider(tags: { packagesTags: string[]; localTags: st
     "<"
   );
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// Change Event Listeners
+//
+////////////////////////////////////////////////////////////////////////////////
+
+const _onDidChangeConfiguration = async (e: vscode.ConfigurationChangeEvent, tags, config) => {
+  if (e.affectsConfiguration(Env("UIComponentsPaths", true))) {
+    tags.packagesTags = await getPackagesTags(config.get(Env("UIComponentsPaths")));
+  }
+};
+
+const _onDidCreateFiles = async (e: vscode.FileCreateEvent, tags) => {
+  if (e.files.some(f => f.fsPath.includes(".component.ts"))) {
+    console.log("add component file");
+    tags.localTags = await getLocalTags();
+  }
+};
+
+const _onDidChangeTextDocument = async (e: vscode.TextDocumentChangeEvent, tags) => {
+  if (e.document.fileName.includes(".component.ts")) {
+    tags.localTags = await getLocalTags();
+  }
+};
+
+export const onDidChangeConfiguration = debounce(_onDidChangeConfiguration, 1000);
+
+export const onDidCreateFiles = debounce(_onDidCreateFiles, 1000);
+
+export const onDidChangeTextDocument = debounce(_onDidChangeTextDocument, 1000);
