@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { join } from "path";
 import * as vscode from "vscode";
 import { ComponentAndDirective } from "../entities/component-and-directive";
-import { getCurrentOpenedFolder } from "../utils/extension";
+import { createProgressBar, getCurrentOpenedFolder } from "../utils/extension";
 import { exists, getFiles } from "../utils/files";
 import { parseAny, parsePattern } from "../utils/parsers";
 import { commaSplit } from "../utils/string";
@@ -70,30 +70,34 @@ export async function parseLocalComponents(file: string) {
 export async function getPackagesTags(paths: string[]) {
   const data = [];
   const files = await getPackagesTypeFiles(paths);
-  for (const file of files) {
-    const components = await parsePackageComponents(file);
-    components.forEach(c => {
-      const selector = c.getComponentSelector();
-      if (selector) {
-        data.push(selector);
-      }
-    });
-  }
+  createProgressBar("Indexing UI Packages Components", async () => {
+    for (const file of files) {
+      const components = await parsePackageComponents(file);
+      components.forEach(c => {
+        const selector = c.getComponentSelector();
+        if (selector) {
+          data.push(selector);
+        }
+      });
+    }
+  });
   return data;
 }
 
 export async function getLocalTags() {
   const data = [];
   const files = await getLocalComponentsFiles();
-  for (const file of files) {
-    const components = await parseLocalComponents(file);
-    components.forEach(c => {
-      const selector = c.getComponentSelector();
-      if (selector) {
-        data.push(selector);
-      }
-    });
-  }
+  createProgressBar("Indexing Local Components", async () => {
+    for (const file of files) {
+      const components = await parseLocalComponents(file);
+      components.forEach(c => {
+        const selector = c.getComponentSelector();
+        if (selector) {
+          data.push(selector);
+        }
+      });
+    }
+  });
   return data;
 }
 

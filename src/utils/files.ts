@@ -9,7 +9,7 @@ export async function getFiles(path: string, endsWith?: string) {
     if (dir.isFile() && typeMatch) {
       files.push(filePath);
     } else if (dir.isDirectory()) {
-      files.push(...(await getFiles(filePath)));
+      files.push(...(await getFiles(filePath, endsWith)));
     }
   }
   return files;
