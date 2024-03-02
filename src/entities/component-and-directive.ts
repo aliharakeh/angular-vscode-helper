@@ -4,7 +4,7 @@ import { parseArray, parseObject } from "../utils/parsers";
 
 export class ComponentAndDirective {
   public component: string;
-  public selector: string[];
+  public selectors: string[];
   public exportAs: string[];
   public inputMap: {
     [key: string]:
@@ -27,7 +27,7 @@ export class ComponentAndDirective {
     if (declaration) {
       const properties = this.parseProperties(declaration);
       this.component = properties[0];
-      this.selector = this.parseSelectors(properties[1]);
+      this.selectors = this.parseSelectors(properties[1]);
       this.exportAs = parseArray(properties[2]);
       this.inputMap = parseObject(properties[3]);
       this.outputMap = parseObject(properties[4]);
@@ -40,7 +40,7 @@ export class ComponentAndDirective {
   }
 
   getComponentSelector() {
-    return this.selector.find((s) => isKebabCase(s));
+    return this.selectors.find(s => isKebabCase(s));
   }
 
   private parseProperties(declaration: string) {
@@ -52,6 +52,6 @@ export class ComponentAndDirective {
     return s
       .trim()
       .split(",")
-      .map((s) => s.trim().replace(/['"]/g, ""));
+      .map(s => s.trim().replace(/['"]/g, ""));
   }
 }
