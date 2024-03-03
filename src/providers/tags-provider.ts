@@ -15,16 +15,16 @@ import { commaSplit } from "../utils/string";
 
 export async function getPackagesTypeFiles(paths: string[]) {
   const nodeModules = join(getCurrentOpenedFolder(), "node_modules");
-  const files: string[] = [];
+  const typeFiles: string[] = [];
   for (const path of paths) {
     const packagePath = join(nodeModules, path);
     if (!(await exists(packagePath))) {
       continue;
     }
     const files = await getFiles(packagePath, ".d.ts");
-    files.push(...files);
+    typeFiles.push(...files);
   }
-  return files;
+  return typeFiles;
 }
 
 export async function getLocalComponentsFiles() {
