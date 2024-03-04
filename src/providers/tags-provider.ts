@@ -37,8 +37,8 @@ export async function getLocalComponentsFiles() {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]*?)>;/g;
-const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]*?)\)[\s\n\t]*export/g;
+const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]+?)>;/g;
+const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export/g;
 
 export async function parsePackageComponents(file: string) {
   const content = await readFile(file, "utf8");
