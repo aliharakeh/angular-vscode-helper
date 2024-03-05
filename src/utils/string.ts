@@ -31,7 +31,3 @@ export function commaSplit(content: string) {
 
   return data;
 }
-
-export function isKebabCase(s: string) {
-  return s.match(/^\w+?(-\w+?)*$/) !== null;
-}

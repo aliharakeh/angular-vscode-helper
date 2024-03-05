@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { ComponentAndDirective } from "../entities/component-and-directive";
 import { createProgressBar, getCurrentOpenedFolder } from "../utils/extension";
 import { exists, getFiles } from "../utils/files";
-import { parseAny, parsePattern } from "../utils/parsers";
+import { parseAny, parseAllPatterns } from "../utils/parsers";
 import { commaSplit } from "../utils/string";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -42,12 +42,12 @@ const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export/g;
 
 export async function parsePackageComponents(file: string) {
   const content = await readFile(file, "utf8");
-  return parsePattern(content, PACKAGE_COMPONENT_PATTERN).map(m => new ComponentAndDirective(m));
+  return parseAllPatterns(content, PACKAGE_COMPONENT_PATTERN).map(m => new ComponentAndDirective(m));
 }
 
 export async function parseLocalComponents(file: string) {
   const content = await readFile(file, "utf8");
-  const declarations = parsePattern(content, LOCAL_COMPONENT_PATTERN);
+  const declarations = parseAllPatterns(content, LOCAL_COMPONENT_PATTERN);
   return declarations.map(declaration => {
     const metaData = commaSplit(declaration.slice(1, -1)).reduce((acc, prop) => {
       const [key, value] = prop.split(":").map(s => s.trim());

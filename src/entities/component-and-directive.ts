@@ -1,6 +1,7 @@
-import { commaSplit, isKebabCase } from "../utils/string";
+import { commaSplit } from "../utils/string";
 import { fillEmptyData } from "../utils/array";
 import { parseArray, parseObject } from "../utils/parsers";
+import { isKebabCase } from "../utils/validation";
 
 export class ComponentAndDirective {
   public component: string;
@@ -45,13 +46,10 @@ export class ComponentAndDirective {
 
   private parseProperties(declaration: string) {
     const parts = commaSplit(declaration);
-    return fillEmptyData(parts, 9);
+    return fillEmptyData(parts, 10);
   }
 
   private parseSelectors(s: string) {
-    return s
-      .trim()
-      .split(",")
-      .map(s => s.trim().replace(/['"]/g, ""));
+    return s.split(",").map(s => s.trim().replace(/['"]/g, ""));
   }
 }

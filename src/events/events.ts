@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { Env } from "../env";
 import { getLocalTags, getPackagesTags } from "../providers/tags-provider";
-import { debounce } from "../utils/functions";
+import { debounce } from "../utils/helpers";
 import { ExtensionData } from "../types/data";
 
 async function _onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent, data: ExtensionData, config) {
