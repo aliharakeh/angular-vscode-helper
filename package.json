@@ -22,24 +22,25 @@
 					"items": {
 						"type": "string"
 					},
-					"description": "An array of node_moules paths that contains the components declarations of installed UI packages. It's better to provide only the directories containing the .d.ts type declaration files for quicker indexing. Any non-existent path will be ignored."
+					"description": "An array of node_modules paths that contains the components declarations of installed UI packages. It's better to provide only the directories containing the .d.ts type declaration files for quicker indexing. Any non-existent path will be ignored."
 				}
 			}
 		}
 	},
 	"main": "./dist/extension.js",
 	"scripts": {
-		"vscode:prepublish1": "npm run compile",
 		"vscode:prepublish": "npm run esbuild-base -- --minify",
 		"compile": "tsc -p ./",
 		"lint": "eslint \"src/**/*.ts\"",
-		"watch": "tsc -watch -p ./",
 		"esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
 		"esbuild": "npm run esbuild-base -- --sourcemap",
-		"esbuild-watch": "npm run esbuild-base -- --sourcemap --watch",
 		"package": "vsce package --allow-missing-repository --allow-star-activation"
 	},
+	"dependencies": {
+		"glob": "^10.3.10"
+	},
 	"devDependencies": {
+		"@angular/material": "^17.1.0",
 		"@types/node": "^20.11.20",
 		"@types/vscode": "^1.86.0",
 		"@typescript-eslint/eslint-plugin": "^6.7.0",
@@ -48,9 +49,5 @@
 		"esbuild": "^0.20.1",
 		"eslint": "^8.57.0",
 		"typescript": "^5.3.2"
-	},
-	"dependencies": {
-		"@angular/material": "^17.1.0",
-		"glob": "^10.3.10"
 	}
 }

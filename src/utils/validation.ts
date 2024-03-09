@@ -10,6 +10,6 @@ export function isParsableString(input: string) {
   return [`"`, `'`].some(q => input.startsWith(q) && input.endsWith(q));
 }
 
-export function isKebabCase(s: string) {
-  return s.match(/^\w+?(-\w+?)*$/) !== null;
+export function isKebabCase(input: string) {
+  return input.match(/^\w+?(-\w+?)*$/) !== null;
 }

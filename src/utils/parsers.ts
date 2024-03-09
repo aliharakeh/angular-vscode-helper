@@ -21,7 +21,8 @@ export function parseArray(input: string) {
 export function parseObject(input: string, separator = ";") {
   if (!input || !isParsableObject(input)) return {};
   const res = {};
-  const pairs = input.split(separator);
+  const cleanedInput = input.replaceAll(separator, ",").replace(/,\s+}/g, " }").slice(1, -1); // remove last `,` before object end
+  const pairs = cleanedInput.split(separator);
   pairs.forEach(p => {
     const [key, value] = p.split(":").map(s => s.trim());
     const parsedKey = parseString(key);
@@ -52,11 +53,11 @@ export function parseAny(input: string) {
   }
 }
 
-export function parseAllPatterns(input: string, pattern: RegExp) {
+export function getPatternMatches(input: string, pattern: RegExp) {
   const matches = input.matchAll(pattern);
   return [...matches].filter(Boolean).map(m => m[1]);
 }
 
-export function parsePattern(input: string, pattern: RegExp) {
+export function getPatternMatch(input: string, pattern: RegExp) {
   return pattern.exec(input)?.[1];
 }

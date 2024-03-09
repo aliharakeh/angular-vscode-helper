@@ -44,6 +44,10 @@ export class ComponentAndDirective {
     return this.selectors.find(s => isKebabCase(s));
   }
 
+  getDefaultModuleName() {
+    return this.component + "Module";
+  }
+
   private parseProperties(declaration: string) {
     const parts = commaSplit(declaration);
     return fillEmptyData(parts, 10);
