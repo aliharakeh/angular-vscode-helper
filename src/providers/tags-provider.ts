@@ -1,13 +1,13 @@
-import { readFile } from "fs/promises";
-import { dirname, join } from "path";
+import { glob } from "glob";
+import { join } from "path";
 import * as vscode from "vscode";
-import { ComponentAndDirective } from "../entities/component-and-directive";
+import {
+  ComponentAndDirective,
+  extractLocalComponents,
+  extractPackageComponents,
+} from "../entities/component-and-directive";
 import { createProgressBar, getCurrentOpenedFolder } from "../utils/extension";
 import { exists, getFiles } from "../utils/files";
-import { parseAny, getPatternMatches } from "../utils/parsers";
-import { commaSplit } from "../utils/string";
-import { ExtensionData, PackageComponentData } from "../types/data";
-import { glob } from "glob";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -40,62 +40,17 @@ export async function getLocalComponentsFiles() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Parse Component Files
+// Get Tags
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]+?)>;/g;
-const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export/g;
-
-export async function parsePackageComponents(file: string) {
-  const content = await readFile(file, "utf8");
-  return getPatternMatches(content, PACKAGE_COMPONENT_PATTERN).map(m => new ComponentAndDirective(m));
-}
-
-export async function parseLocalComponents(file: string) {
-  const content = await readFile(file, "utf8");
-  const declarations = getPatternMatches(content, LOCAL_COMPONENT_PATTERN);
-  return declarations.map(declaration => {
-    const metaData = commaSplit(declaration.slice(1, -1)).reduce((acc, prop) => {
-      const [key, value] = prop.split(":").map(s => s.trim());
-      acc[key] = parseAny(value);
-      return acc;
-    }, {});
-    const component = new ComponentAndDirective();
-    metaData.selectors = metaData.selector?.split(",");
-    Object.assign(component, metaData);
-    return component;
-  });
-}
-
-////////////////////////////////////////////////////////////////////////////////
-//
-// Get Tag List
-//
-////////////////////////////////////////////////////////////////////////////////
-
-export async function getPackagesTags(paths: string[]): Promise<PackageComponentData[]> {
-  const data: PackageComponentData[] = [];
+export async function getPackagesTags(paths: string[]) {
+  const data: ComponentAndDirective[] = [];
   await createProgressBar("Indexing UI Packages Components", async () => {
     const files = await getPackagesTypeFiles(paths);
-    const selectors = new Set<string>();
     for (const file of files) {
-      const components = await parsePackageComponents(file);
-      components.forEach(c => {
-        const selector = c.getComponentSelector();
-        if (selector) {
-          if (!selectors.has(selector)) {
-            selectors.add(selector);
-            data.push({ component: c.component, selector, imports: [dirname(file) + "/" + c.getDefaultModuleName()] });
-          } else {
-            data.forEach(d => {
-              if (d.selector === selector) {
-                d.imports.push(dirname(file) + "/" + c.getDefaultModuleName());
-              }
-            });
-          }
-        }
-      });
+      const components = await extractPackageComponents(file);
+      data.push(...components.filter(c => c.getComponentSelector()));
     }
   });
   return data;
@@ -103,16 +58,11 @@ export async function getPackagesTags(paths: string[]): Promise<PackageComponent
 
 export async function getLocalTags() {
   const data = [];
-  const files = await getLocalComponentsFiles();
   await createProgressBar("Indexing Local Components", async () => {
+    const files = await getLocalComponentsFiles();
     for (const file of files) {
-      const components = await parseLocalComponents(file);
-      components.forEach(c => {
-        const selector = c.getComponentSelector();
-        if (selector) {
-          data.push(selector);
-        }
-      });
+      const components = await extractLocalComponents(file);
+      data.push(...components.filter(c => c.getComponentSelector()));
     }
   });
   return data;
@@ -123,16 +73,19 @@ export async function getLocalTags() {
 // Create Extension Tag Provider
 //
 ////////////////////////////////////////////////////////////////////////////////
+export type ExtensionData = {
+  packagesTags: ComponentAndDirective[];
+  localTags: ComponentAndDirective[];
+};
 
 export function createTagsProvider(data: ExtensionData) {
   return vscode.languages.registerCompletionItemProvider(
     "html",
     {
       provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-        const packagesTags = data.packagesTags.map(t => t.selector);
-        const tags = [...packagesTags, ...data.localTags];
+        const tags = [...data.packagesTags, ...data.localTags].map(c => c.getComponentSelector());
 
-        // get line last char
+        // get last char in current line
         const prevChar = document.lineAt(position.line).text.charAt(position.character - 1);
 
         // if last character is "<" then no need to add "<" to the tag

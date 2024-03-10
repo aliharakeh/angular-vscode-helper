@@ -1,6 +1,10 @@
 import * as vscode from "vscode";
-import { ProgressAction } from "../types/gui";
 
+////////////////////////////////////////////////////////////////////////////////
+//
+// Workspace Helpers
+//
+////////////////////////////////////////////////////////////////////////////////
 export function getCurrentOpenedFolder() {
   return vscode.workspace.workspaceFolders[0].uri.fsPath;
 }
@@ -8,6 +12,16 @@ export function getCurrentOpenedFolder() {
 export function getCurrentActiveFile() {
   return vscode.window.activeTextEditor?.document.fileName;
 }
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// GUI Helpers
+//
+////////////////////////////////////////////////////////////////////////////////
+export type ProgressAction = (
+  progress: vscode.Progress<{ message?: string; increment?: number }>,
+  token: vscode.CancellationToken
+) => Promise<void>;
 
 export function createProgressBar(message: string, action: ProgressAction, onCancel?: () => void) {
   return vscode.window.withProgress(

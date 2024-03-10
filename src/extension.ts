@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
-import { createTagsProvider, getLocalTags, getPackagesTags } from "./providers/tags-provider";
+import { ExtensionData, createTagsProvider, getLocalTags, getPackagesTags } from "./providers/tags-provider";
 import { Env, EXTENSION_NAME } from "./env";
 import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events/events";
-import { ExtensionData } from "./types/data";
 
 export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
