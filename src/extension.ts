@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { ExtensionData, createTagsProvider, getLocalTags, getPackagesTags } from "./providers/tags-provider";
 import { Env, EXTENSION_NAME } from "./env";
-import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events/events";
+import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events";
 
 export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
@@ -23,6 +23,8 @@ export async function activate(context: vscode.ExtensionContext) {
     packagesTags: await getPackagesTags(config.get(Env("UIComponentsPaths"))),
     localTags: await getLocalTags(),
   };
+
+  console.log(data);
 
   // Listen for configuration changes and update the tag list with the new packages ui components
   vscode.workspace.onDidChangeConfiguration(e => onDidChangeConfiguration(e, data, config));

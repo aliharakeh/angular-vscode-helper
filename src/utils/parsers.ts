@@ -1,3 +1,4 @@
+import { commaSplit } from "./string";
 import { isParsableArray, isParsableObject, isParsableString } from "./validation";
 
 export function parseString(input: string) {
@@ -18,11 +19,20 @@ export function parseArray(input: string) {
     .map(s => s.trim());
 }
 
-export function parseObject(input: string, separator = ";") {
+export function parseObject(input: string, inputCleaner?: (s: string) => string) {
   if (!input || !isParsableObject(input)) return {};
   const res = {};
-  const cleanedInput = input.replaceAll(separator, ",").replace(/,\s+}/g, " }").slice(1, -1); // remove last `,` before object end
-  const pairs = cleanedInput.split(separator);
+  let cleanedInput = input;
+  if (inputCleaner) {
+    cleanedInput = inputCleaner(cleanedInput);
+  }
+  // remove last `,` before object end
+  cleanedInput = cleanedInput.replace(/,\s+}/g, " }");
+  // remove object symbols
+  if (cleanedInput.startsWith("{") && cleanedInput.endsWith("}")) {
+    cleanedInput = cleanedInput.slice(1, -1);
+  }
+  const pairs = commaSplit(cleanedInput);
   pairs.forEach(p => {
     const [key, value] = p.split(":").map(s => s.trim());
     const parsedKey = parseString(key);
@@ -31,7 +41,7 @@ export function parseObject(input: string, separator = ";") {
       if (isParsableArray(value)) {
         parsedValue = parseArray(value);
       } else if (isParsableObject(value)) {
-        parsedValue = parseObject(value);
+        parsedValue = parseObject(value, inputCleaner);
       } else {
         parsedValue = parseString(value);
       }
@@ -55,9 +65,9 @@ export function parseAny(input: string) {
 
 export function getPatternMatches(input: string, pattern: RegExp) {
   const matches = input.matchAll(pattern);
-  return [...matches].filter(Boolean).map(m => m[1]);
+  return [...matches].filter(Boolean).map(m => m.slice(1));
 }
 
 export function getPatternMatch(input: string, pattern: RegExp) {
-  return pattern.exec(input)?.[1];
+  return pattern.exec(input)?.slice(1);
 }

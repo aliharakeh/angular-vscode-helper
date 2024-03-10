@@ -1,13 +1,9 @@
 import { glob } from "glob";
-import { join } from "path";
+import { basename, dirname, join } from "path";
 import * as vscode from "vscode";
-import {
-  ComponentAndDirective,
-  extractLocalComponents,
-  extractPackageComponents,
-} from "../entities/component-and-directive";
+import { ComponentAndDirective, extractLocalComponents, extractPackageComponents } from "../component-and-directive";
 import { createProgressBar, getCurrentOpenedFolder } from "../utils/extension";
-import { exists, getFiles } from "../utils/files";
+import { ComponentFile, exists, getFiles } from "../utils/files";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -17,7 +13,7 @@ import { exists, getFiles } from "../utils/files";
 
 export async function getPackagesTypeFiles(paths: string[]) {
   const nodeModules = join(getCurrentOpenedFolder(), "node_modules");
-  const typeFiles: string[] = [];
+  const typeFiles: ComponentFile[] = [];
   for (const path of paths) {
     const packagePath = join(nodeModules, path);
     if (!(await exists(packagePath))) {
@@ -30,12 +26,25 @@ export async function getPackagesTypeFiles(paths: string[]) {
 }
 
 export async function getLocalComponentsFiles() {
-  const files = await glob(`**/*.component.ts`, {
+  const files = await glob(`**/*.{component,module}.ts`, {
     cwd: getCurrentOpenedFolder(),
     absolute: true,
     ignore: ["**/node_modules/**", "**/dist/**", "**/out/**", "**/.git/**"],
   });
-  return files;
+  const dirGrouping = files.reduce((acc, file) => {
+    const fileData = {
+      path: file,
+      name: basename(file),
+      directory: dirname(file),
+    };
+    if (!acc[fileData.directory]) {
+      acc[fileData.directory] = [];
+    }
+    acc[fileData.directory] = fileData;
+    return acc;
+  }, {});
+  // TODO: get module files and then add each to their component file in the same directory
+  return Object.entries(dirGrouping).map(([dir, files]) => {});
 }
 
 ////////////////////////////////////////////////////////////////////////////////

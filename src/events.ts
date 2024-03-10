@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { Env } from "../env";
-import { ExtensionData, getLocalTags, getPackagesTags } from "../providers/tags-provider";
-import { debounce } from "../utils/helpers";
+import { Env } from "./env";
+import { ExtensionData, getLocalTags, getPackagesTags } from "./providers/tags-provider";
+import { debounce } from "./utils/helpers";
 
 async function _onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent, data: ExtensionData, config) {
   if (e.affectsConfiguration(Env("UIComponentsPaths", true))) {
