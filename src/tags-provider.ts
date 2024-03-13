@@ -65,7 +65,7 @@ export function getLocalFiles(globPattern: string) {
 //
 ////////////////////////////////////////////////////////////////////////////////
 
-export async function getPackagesTags(paths: string[]) {
+export async function getPackagesComponents(paths: string[]) {
   const data: ComponentAndDirective[] = [];
   await createProgressBar("Indexing UI Packages Components", async () => {
     const files = await getPackagesTypeFiles(paths);
@@ -77,7 +77,7 @@ export async function getPackagesTags(paths: string[]) {
   return data;
 }
 
-export async function getLocalTags() {
+export async function getLocalComponents() {
   const data = [];
   await createProgressBar("Indexing Local Components", async () => {
     const files = await getLocalComponentsFiles();
@@ -95,8 +95,8 @@ export async function getLocalTags() {
 //
 ////////////////////////////////////////////////////////////////////////////////
 export type ExtensionData = {
-  packagesTags: ComponentAndDirective[];
-  localTags: ComponentAndDirective[];
+  packagesComponents: ComponentAndDirective[];
+  localComponents: ComponentAndDirective[];
 };
 
 export function createTagsProvider(data: ExtensionData) {
@@ -104,7 +104,7 @@ export function createTagsProvider(data: ExtensionData) {
     "html",
     {
       provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-        const components = [...data.packagesTags, ...data.localTags];
+        const components = [...data.packagesComponents, ...data.localComponents];
 
         // get last char in current line
         const prevChar = document.lineAt(position.line).text.charAt(position.character - 1);

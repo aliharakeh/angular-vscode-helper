@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ExtensionData, createTagsProvider, getLocalTags, getPackagesTags } from "./tags-provider";
+import { ExtensionData, createTagsProvider, getLocalComponents, getPackagesComponents } from "./tags-provider";
 import { Env, EXTENSION_NAME } from "./env";
 import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events";
 
@@ -20,8 +20,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // use an object to make it easy to keep the main reference when we change the inner tag lists later
   const data: ExtensionData = {
-    packagesTags: await getPackagesTags(config.get(Env("UIComponentsPaths"))),
-    localTags: await getLocalTags(),
+    packagesComponents: await getPackagesComponents(config.get(Env("UIComponentsPaths"))),
+    localComponents: await getLocalComponents(),
   };
 
   console.log(data);

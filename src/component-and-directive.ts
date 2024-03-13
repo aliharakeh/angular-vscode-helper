@@ -35,6 +35,7 @@ export async function extractPackageComponents(file: ComponentFile): Promise<Com
         file.modulePath.slice(file.modulePath.indexOf(cwd) + cwd.length + 1),
         getDefaultModuleName(properties[0])
       ),
+      file: file.path,
     });
   });
 }
@@ -59,6 +60,7 @@ export async function extractLocalComponents(file: ComponentFile) {
       hostDirectives: null,
       isSignal: false,
       importPath: importPath,
+      file: file.path,
     });
   });
 }
@@ -93,6 +95,7 @@ export class ComponentAndDirective {
   public hostDirectives: any;
   public isSignal: boolean;
   public importPath: string;
+  public file: string;
 
   constructor(data: Partial<ComponentAndDirective>) {
     Object.assign(this, data);
