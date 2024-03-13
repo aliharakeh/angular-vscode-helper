@@ -1,5 +1,5 @@
 import { readFile } from "fs/promises";
-import { dirname, join } from "path";
+import { basename, join } from "path";
 import { fillEmptyData } from "./utils/array";
 import { getCurrentOpenedFolder } from "./utils/extension";
 import { getPatternMatches, parseArray, parseObject, parseString } from "./utils/parsers";
@@ -30,20 +30,23 @@ export async function extractPackageComponents(file: ComponentFile): Promise<Com
       isStandalone: parseString(properties[7]) === "true",
       hostDirectives: properties[8],
       isSignal: parseString(properties[9]) === "true",
-      importPath: file.directory.slice(file.directory.indexOf(cwd) + cwd.length + 1), // standalone & module are in the same folder
+      // TODO: see if we can make this better. standalone & module are considered in the same folder for now
+      importPath: join(
+        file.modulePath.slice(file.modulePath.indexOf(cwd) + cwd.length + 1),
+        getDefaultModuleName(properties[0])
+      ),
     });
   });
 }
 
 const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export[\s\t]+class[\s\t]+(\w+)/g;
 
-export async function extractLocalComponents(file: ComponentFile, parentModulePath: string = "") {
-  const content = await readFile(file.path, "utf8");
+export async function extractLocalComponents(file: ComponentFile) {
+  const content = await readFile(join(getCurrentOpenedFolder(), file.path), "utf8");
   return getPatternMatches(content, LOCAL_COMPONENT_PATTERN).map(data => {
     const properties: any = parseObject(data[0]);
     const standalone = properties.standalone === "true";
-    const cwd = getCurrentOpenedFolder();
-    const importPath = (standalone ? file.path : parentModulePath).slice(file.path.indexOf(cwd) + cwd.length + 1);
+    const importPath = standalone ? file.path : file.modulePath;
     return new ComponentAndDirective({
       component: data[1],
       selectors: properties.selector?.split(",").map(s => s.trim()) || [],
@@ -98,10 +101,6 @@ export class ComponentAndDirective {
   getComponentSelector() {
     return this.selectors.find(s => isKebabCase(s));
   }
-
-  getDefaultModuleName() {
-    return this.component + "Module";
-  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,7 +117,10 @@ function parseSelectors(s: string) {
   return s.split(",").map(s => s.trim().replace(/['"]/g, ""));
 }
 
+function getDefaultModuleName(component: string) {
+  return component + "Module";
+}
+
 function generateImport(component: ComponentAndDirective) {
-  const name = component.isStandalone ? component.component : component.getDefaultModuleName();
-  return `import { ${name} } from "${component.importPath}";`;
+  return `import { ${basename(component.importPath)} } from "${component.importPath}";`;
 }

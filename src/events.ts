@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { Env } from "./env";
-import { ExtensionData, getLocalTags, getPackagesTags } from "./providers/tags-provider";
+import { ExtensionData, getLocalTags, getPackagesTags } from "./tags-provider";
 import { debounce } from "./utils/helpers";
 
 async function _onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent, data: ExtensionData, config) {

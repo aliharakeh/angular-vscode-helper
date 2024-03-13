@@ -26,11 +26,37 @@ export async function getPackagesTypeFiles(paths: string[]) {
 }
 
 export async function getLocalComponentsFiles() {
-  const files = await glob(`**/*.{component,module}.ts`, {
+  const modulesFilesMap = (await getLocalFiles(`**/*.module.ts`)).reduce((acc, file) => {
+    acc[dirname(file)] = file;
+    return acc;
+  }, {});
+
+  const componentFiles = (await getLocalFiles(`**/*.component.ts`)).map(file => {
+    const dir = dirname(file);
+    let nearestModule = modulesFilesMap[dir];
+    let parentDir = dirname(dir);
+    while (!nearestModule) {
+      nearestModule = modulesFilesMap[parentDir];
+      parentDir = dirname(dir);
+      if (!parentDir) {
+        break;
+      }
+    }
+    return {
+      path: file,
+      name: basename(file),
+      directory: dir,
+      modulePath: nearestModule,
+    };
+  });
+  return componentFiles;
+}
+
+export function getLocalFiles(globPattern: string) {
+  return glob(globPattern, {
     cwd: getCurrentOpenedFolder(),
     ignore: ["**/node_modules/**", "**/dist/**", "**/out/**", "**/.git/**"],
   });
-  const directoryTree = buildDirectoryTree(files);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,10 +81,10 @@ export async function getLocalTags() {
   const data = [];
   await createProgressBar("Indexing Local Components", async () => {
     const files = await getLocalComponentsFiles();
-    // for (const file of files) {
-    //   const components = await extractLocalComponents(file);
-    //   data.push(...components.filter(c => c.getComponentSelector()));
-    // }
+    for (const file of files) {
+      const components = await extractLocalComponents(file);
+      data.push(...components.filter(c => c.getComponentSelector()));
+    }
   });
   return data;
 }
@@ -78,16 +104,18 @@ export function createTagsProvider(data: ExtensionData) {
     "html",
     {
       provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
-        const tags = [...data.packagesTags, ...data.localTags].map(c => c.getComponentSelector());
+        const components = [...data.packagesTags, ...data.localTags];
 
         // get last char in current line
         const prevChar = document.lineAt(position.line).text.charAt(position.character - 1);
 
         // if last character is "<" then no need to add "<" to the tag
         const prefix = prevChar === "<" ? "" : "<";
-        return tags.map(tag => {
-          const completionItem = new vscode.CompletionItem(tag, vscode.CompletionItemKind.Snippet);
-          completionItem.insertText = new vscode.SnippetString(`${prefix}${tag}>$1</${tag}>`);
+        return components.map(c => {
+          const selector = c.getComponentSelector();
+          const label = `${selector} (${c.importPath})`;
+          const completionItem = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
+          completionItem.insertText = new vscode.SnippetString(`${prefix}${selector}>$1</${selector}>`);
           return completionItem;
         });
       },

@@ -30,3 +30,22 @@ export function exists(path: string) {
     .then(() => true)
     .catch(() => false);
 }
+
+export function buildDirectoryTree(files) {
+  const tree = {};
+  files.forEach(file => {
+    const parts = file.split(/[\\/]/);
+    let currentLevel = tree;
+    parts.forEach((part, index) => {
+      if (index === parts.length - 1) {
+        // If it's the last part, it's a file, so we add it to the current level
+        currentLevel[part] = true;
+      } else {
+        // If it's not the last part, it's a directory, so we ensure it exists in the tree
+        currentLevel[part] = currentLevel[part] || {};
+        currentLevel = currentLevel[part];
+      }
+    });
+  });
+  return tree;
+}

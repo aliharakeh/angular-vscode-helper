@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { ExtensionData, createTagsProvider, getLocalTags, getPackagesTags } from "./providers/tags-provider";
+import { ExtensionData, createTagsProvider, getLocalTags, getPackagesTags } from "./tags-provider";
 import { Env, EXTENSION_NAME } from "./env";
 import { onDidChangeConfiguration, onDidCreateFiles, onDidChangeTextDocument } from "./events";
 
