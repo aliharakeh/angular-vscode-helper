@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 // Workspace Helpers
 //
 ////////////////////////////////////////////////////////////////////////////////
-export function getCurrentOpenedFolder() {
+export function getCurrentWorkspace() {
   return vscode.workspace.workspaceFolders[0].uri.fsPath;
 }
 

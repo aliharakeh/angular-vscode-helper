@@ -1,9 +1,10 @@
-import { glob } from "glob";
 import { basename, dirname, join } from "path";
 import * as vscode from "vscode";
-import { ComponentAndDirective, extractLocalComponents, extractPackageComponents } from "./component-and-directive";
-import { createProgressBar, getCurrentOpenedFolder } from "./utils/extension";
-import { ComponentFile, buildDirectoryTree, exists, getFiles } from "./utils/files";
+import { AngularComponent, extractLocalComponents, extractPackageComponents } from "./components";
+import { createProgressBar, getCurrentWorkspace } from "./utils/extension";
+import { ComponentFile, exists, getFiles } from "./utils/files";
+import { glob } from "glob";
+import { ExtensionData } from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -12,7 +13,7 @@ import { ComponentFile, buildDirectoryTree, exists, getFiles } from "./utils/fil
 ///////////////////////////////////////////////////////////////////////////////
 
 export async function getPackagesTypeFiles(paths: string[]) {
-  const nodeModules = join(getCurrentOpenedFolder(), "node_modules");
+  const nodeModules = join(getCurrentWorkspace(), "node_modules");
   const typeFiles: ComponentFile[] = [];
   for (const path of paths) {
     const packagePath = join(nodeModules, path);
@@ -54,7 +55,7 @@ export async function getLocalComponentsFiles() {
 
 export function getLocalFiles(globPattern: string) {
   return glob(globPattern, {
-    cwd: getCurrentOpenedFolder(),
+    cwd: getCurrentWorkspace(),
     ignore: ["**/node_modules/**", "**/dist/**", "**/out/**", "**/.git/**"],
   });
 }
@@ -66,7 +67,7 @@ export function getLocalFiles(globPattern: string) {
 ////////////////////////////////////////////////////////////////////////////////
 
 export async function getPackagesComponents(paths: string[]) {
-  const data: ComponentAndDirective[] = [];
+  const data: AngularComponent[] = [];
   await createProgressBar("Indexing UI Packages Components", async () => {
     const files = await getPackagesTypeFiles(paths);
     for (const file of files) {
@@ -91,13 +92,9 @@ export async function getLocalComponents() {
 
 ////////////////////////////////////////////////////////////////////////////////
 //
-// Create Extension Tag Provider
+// Tags Completion Provider
 //
 ////////////////////////////////////////////////////////////////////////////////
-export type ExtensionData = {
-  packagesComponents: ComponentAndDirective[];
-  localComponents: ComponentAndDirective[];
-};
 
 export function createTagsProvider(data: ExtensionData) {
   return vscode.languages.registerCompletionItemProvider(
@@ -116,6 +113,15 @@ export function createTagsProvider(data: ExtensionData) {
           const label = `${selector} (${c.importPath})`;
           const completionItem = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
           completionItem.insertText = new vscode.SnippetString(`${prefix}${selector}>$1</${selector}>`);
+          completionItem.command = {
+            command: "extension.applyExtraEdits",
+            title: "Auto Import Component",
+            arguments: [
+              {
+                document,
+              },
+            ],
+          };
           return completionItem;
         });
       },
