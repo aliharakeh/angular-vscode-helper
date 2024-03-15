@@ -1,10 +1,11 @@
 import { basename, dirname, join } from "path";
 import * as vscode from "vscode";
 import { AngularComponent, extractLocalComponents, extractPackageComponents } from "./components";
-import { createProgressBar, getCurrentWorkspace } from "./utils/extension";
-import { ComponentFile, exists, getFiles } from "./utils/files";
 import { glob } from "glob";
 import { ExtensionData } from "./types";
+import { getCurrentWorkspace, createProgressBar } from "./env";
+import { ComponentFile, exists, getFiles } from "./utils";
+import { Commands } from "./commands";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -113,14 +114,11 @@ export function createTagsProvider(data: ExtensionData) {
           const label = `${selector} (${c.importPath})`;
           const completionItem = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
           completionItem.insertText = new vscode.SnippetString(`${prefix}${selector}>$1</${selector}>`);
+          const command = Commands.ComponentImport;
           completionItem.command = {
-            command: "extension.applyExtraEdits",
-            title: "Auto Import Component",
-            arguments: [
-              {
-                document,
-              },
-            ],
+            command: command.key,
+            title: command.title,
+            arguments: [c],
           };
           return completionItem;
         });

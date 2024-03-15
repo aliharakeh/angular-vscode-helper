@@ -1,12 +1,16 @@
-import * as vscode from "vscode";
 import { readFile } from "fs/promises";
-import { basename, join } from "path";
-import { fillEmptyData } from "./utils/array";
-import { getCurrentWorkspace } from "./utils/extension";
-import { getPatternMatches, parseArray, parseObject, parseString } from "./utils/parsers";
-import { commaSplit } from "./utils/string";
-import { isKebabCase } from "./utils/validation";
-import { ComponentFile } from "./utils/files";
+import { basename, dirname, join } from "path";
+import { getCurrentWorkspace } from "./env";
+import {
+  ComponentFile,
+  getPatternMatches,
+  parseArray,
+  parseObject,
+  parseString,
+  isKebabCase,
+  commaSplit,
+  fillEmptyData,
+} from "./utils";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -17,9 +21,11 @@ const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]+?)>;/g;
 
 export async function extractPackageComponents(file: ComponentFile): Promise<AngularComponent[]> {
   const content = await readFile(file.path, "utf8");
-  return getPatternMatches(content, PACKAGE_COMPONENT_PATTERN).map(data => {
+  const components = getPatternMatches(content, PACKAGE_COMPONENT_PATTERN);
+  const cwd = join(getCurrentWorkspace(), "node_modules");
+  return components.map(data => {
     const properties = parseProperties(data[0]);
-    const cwd = join(getCurrentWorkspace(), "node_modules");
+    const standalone = parseString(properties[7]) === "true";
     return new AngularComponent({
       component: properties[0],
       selectors: parseSelectors(properties[1]),
@@ -28,14 +34,12 @@ export async function extractPackageComponents(file: ComponentFile): Promise<Ang
       outputMap: parseObject(properties[4], s => s.replaceAll(";", ",")),
       queryFields: parseArray(properties[5]),
       ngContentSelectors: parseArray(properties[6]),
-      isStandalone: parseString(properties[7]) === "true",
+      isStandalone: standalone,
       hostDirectives: properties[8],
       isSignal: parseString(properties[9]) === "true",
-      // TODO: see if we can make this better. standalone & module are considered in the same folder for now
-      importPath: join(
-        file.modulePath.slice(file.modulePath.indexOf(cwd) + cwd.length + 1),
-        getDefaultModuleName(properties[0])
-      ),
+      // standalone & module are considered in the same folder for now
+      importPath: file.modulePath.slice(file.modulePath.indexOf(cwd) + cwd.length + 1),
+      importName: standalone ? properties[0] : `${properties[0]}Module`,
       file: file.path,
     });
   });
@@ -45,10 +49,10 @@ const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export[\s\t]
 
 export async function extractLocalComponents(file: ComponentFile) {
   const content = await readFile(join(getCurrentWorkspace(), file.path), "utf8");
+  const cwd = getCurrentWorkspace();
   return getPatternMatches(content, LOCAL_COMPONENT_PATTERN).map(data => {
     const properties: any = parseObject(data[0]);
     const standalone = properties.standalone === "true";
-    const importPath = standalone ? file.path : file.modulePath;
     return new AngularComponent({
       component: data[1],
       selectors: properties.selector?.split(",").map(s => s.trim()) || [],
@@ -60,8 +64,9 @@ export async function extractLocalComponents(file: ComponentFile) {
       isStandalone: standalone,
       hostDirectives: null,
       isSignal: false,
-      importPath: importPath,
-      file: file.path,
+      importPath: standalone ? file.path : file.modulePath,
+      importName: standalone ? data[1] : getModuleNameFromFile(file.modulePath),
+      file: join(cwd, file.path),
     });
   });
 }
@@ -96,6 +101,7 @@ export class AngularComponent {
   public hostDirectives: any;
   public isSignal: boolean;
   public importPath: string;
+  public importName: string;
   public file: string;
 
   constructor(data: Partial<AngularComponent>) {
@@ -112,13 +118,8 @@ export class AngularComponent {
 // Vscode Import
 //
 ////////////////////////////////////////////////////////////////////////////////
-export function generateComponentImport(component: AngularComponent) {
-  return `import { ${basename(component.importPath)} } from "${component.importPath}";`;
-}
-
-export function createImportWorkspaceEdits(component: AngularComponent) {
-  const edit = new vscode.WorkspaceEdit();
-  edit.insert(vscode.Uri.file(getCurrentWorkspace()), new vscode.Position(0, 0), generateComponentImport(component));
+export function getComponentImport(component: AngularComponent) {
+  return `import { ${component.importName} } from "${component.importPath.slice(0, -3)}";`;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -135,6 +136,9 @@ function parseSelectors(s: string) {
   return s.split(",").map(s => s.trim().replace(/['"]/g, ""));
 }
 
-function getDefaultModuleName(component: string) {
-  return component + "Module";
+function getModuleNameFromFile(filePath: string) {
+  return basename(filePath, ".ts")
+    .split(/[.-]/)
+    .map(s => s.charAt(0).toUpperCase() + s.slice(1))
+    .join("");
 }

@@ -3,6 +3,7 @@ import { createTagsProvider, getLocalComponents, getPackagesComponents } from ".
 import { Config } from "./env";
 import { onDidChangeConfiguration, onDidCreateFiles, onDidRenameFiles, onDidSaveTextDocument } from "./events";
 import { ExtensionData } from "./types";
+import { Commands, createCommand } from "./commands";
 
 export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
@@ -31,10 +32,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
   ////////////////////////////////////////////////////////////////////////////
   //
+  // Commands
+  //
+  ////////////////////////////////////////////////////////////////////////////
+  const commands = [createCommand(Commands.ComponentImport, data)];
+  context.subscriptions.push(...commands);
+
+  ////////////////////////////////////////////////////////////////////////////
+  //
   // Providers
   //
   ////////////////////////////////////////////////////////////////////////////
 
-  const tagsProvider = createTagsProvider(data);
-  context.subscriptions.push(tagsProvider);
+  const providers = [createTagsProvider(data)];
+  context.subscriptions.push(...providers);
 }

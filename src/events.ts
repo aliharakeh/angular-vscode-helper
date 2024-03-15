@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { Config, Env } from "./env";
 import { getLocalComponents, getPackagesComponents } from "./tags-provider";
-import { debounce } from "./utils/helpers";
+import { debounce } from "./utils";
 import { ExtensionData } from "./types";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -52,9 +52,9 @@ async function _onDidRenameFiles(e: vscode.FileRenameEvent, data: ExtensionData)
 
 export const onDidSaveTextDocument = debounce(_onDidSaveTextDocument, 1000);
 
-async function _onDidSaveTextDocument(e: vscode.TextDocumentChangeEvent, data: ExtensionData) {
+async function _onDidSaveTextDocument(e: vscode.TextDocument, data: ExtensionData) {
   console.log("save component file");
-  handleLocalChanges([e.document.fileName], data);
+  handleLocalChanges([e.uri.fsPath], data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
