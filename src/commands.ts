@@ -1,5 +1,5 @@
 import { join } from "path";
-import { AngularComponent, generateComponentImport } from "./components";
+import { AngularComponent } from "./components";
 import { getCurrentActiveFile } from "./env";
 import * as vscode from "vscode";
 import { readFile } from "fs/promises";
@@ -46,4 +46,7 @@ async function createComponentImportCommand(component: AngularComponent, data: E
   //   const edit = new vscode.WorkspaceEdit();
   //   edit.replace(importFile, new vscode.Range(0, 0, 0, 0), newContent);
   //   vscode.workspace.applyEdit(edit);
+}
+function generateComponentImport(component: AngularComponent) {
+  throw new Error("Function not implemented.");
 }
