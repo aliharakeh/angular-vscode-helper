@@ -10,6 +10,7 @@ import {
   isKebabCase,
   commaSplit,
   fillEmptyData,
+  getRelativePath,
 } from "./utils";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -118,8 +119,8 @@ export class AngularComponent {
 // Vscode Import
 //
 ////////////////////////////////////////////////////////////////////////////////
-export function getComponentImport(component: AngularComponent) {
-  return `import { ${component.importName} } from "${component.importPath.slice(0, -3)}";`;
+export function getComponentImport(component: AngularComponent, dest: string) {
+  return `import { ${component.importName} } from "${getRelativePath(component.file, dest).slice(0, -3)}";`;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

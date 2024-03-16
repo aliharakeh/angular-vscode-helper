@@ -1,8 +1,8 @@
 import { join } from "path";
-import { AngularComponent } from "./components";
-import { getCurrentActiveFile } from "./env";
+import { AngularComponent, getComponentImport } from "./components";
+import { getCurrentActiveFile, getCurrentWorkspace } from "./env";
 import * as vscode from "vscode";
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 import { ExtensionCommand, ExtensionData } from "./types";
 
 export const Commands: Record<string, ExtensionCommand> = {
@@ -26,27 +26,17 @@ export function createCommand(command: ExtensionCommand, data: ExtensionData) {
 ////////////////////////////////////////////////////////////////////////////
 
 async function createComponentImportCommand(component: AngularComponent, data: ExtensionData) {
-  console.log("component", component);
   const hostFile = getCurrentActiveFile().replace(".html", ".ts");
-  console.log("hostFile", hostFile);
   const hostComponent = data.localComponents.find(c => c.file === hostFile);
-  console.log("hostComponent", hostComponent, data.localComponents);
-  const file = vscode.Uri.file(hostComponent.importPath);
-  console.log("file", file);
-  const componentImport = generateComponentImport(component);
-  console.log("componentImport", componentImport);
-  const content = await readFile(file.fsPath, "utf8");
+  const editedFile = join(getCurrentWorkspace(), hostComponent.importPath);
+  const componentImport = getComponentImport(component, editedFile);
+  const content = await readFile(editedFile, "utf8");
   const newContent = [
     componentImport,
-    content.replace(/import\s:\[([\w,\s\n]+)\]/, (s, m1) => {
-      return m1 + ", " + component.importName;
+    content.replace(/imports:\s+\[([\w,\s\n]*?)\],/, (s, m1) => {
+      const hasImports = !!m1.trim();
+      return ["imports: [" + m1, hasImports ? ", " + component.importName : component.importName, "],"].join("");
     }),
   ].join("\n");
-  console.log("newContent", newContent);
-  //   const edit = new vscode.WorkspaceEdit();
-  //   edit.replace(importFile, new vscode.Range(0, 0, 0, 0), newContent);
-  //   vscode.workspace.applyEdit(edit);
-}
-function generateComponentImport(component: AngularComponent) {
-  throw new Error("Function not implemented.");
+  await writeFile(editedFile, newContent, "utf8");
 }

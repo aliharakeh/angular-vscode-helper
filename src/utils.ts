@@ -106,6 +106,24 @@ export function buildDirectoryTree(files) {
   return tree;
 }
 
+export function getRelativePath(src: string, dest: string) {
+  let srcParts = src.split(/[\\/]/);
+  let destParts = dest.split(/[\\/]/);
+  let i = 0;
+  // Find the first difference
+  while (i < srcParts.length && i < destParts.length && srcParts[i] === destParts[i]) {
+    i++;
+  }
+  // remove common parts
+  srcParts = srcParts.slice(i);
+  destParts = destParts.slice(i);
+  // Add .. for each difference and build the path
+  return destParts
+    .map((_, i) => (i === 0 ? "." : i === destParts.length - 1 ? "" : ".."))
+    .concat(srcParts as any)
+    .join("/");
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 //
 // Parsers
