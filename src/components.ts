@@ -1,16 +1,16 @@
 import { readFile } from "fs/promises";
-import { basename, dirname, join } from "path";
+import { basename, join } from "path";
 import { getCurrentWorkspace } from "./env";
 import {
   ComponentFile,
+  commaSplit,
+  fillEmptyData,
   getPatternMatches,
+  getRelativePath,
+  isKebabCase,
   parseArray,
   parseObject,
   parseString,
-  isKebabCase,
-  commaSplit,
-  fillEmptyData,
-  getRelativePath,
 } from "./utils";
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -21,9 +21,9 @@ import {
 const PACKAGE_COMPONENT_PATTERN = /i0\.ɵɵComponentDeclaration<([\s\S]+?)>;/g;
 
 export async function extractPackageComponents(file: ComponentFile): Promise<AngularComponent[]> {
-  const content = await readFile(file.path, "utf8");
-  const components = getPatternMatches(content, PACKAGE_COMPONENT_PATTERN);
   const cwd = join(getCurrentWorkspace(), "node_modules");
+  const content = await readFile(join(cwd, file.path), "utf8");
+  const components = getPatternMatches(content, PACKAGE_COMPONENT_PATTERN);
   return components.map(data => {
     const properties = parseProperties(data[0]);
     const standalone = parseString(properties[7]) === "true";
@@ -39,9 +39,10 @@ export async function extractPackageComponents(file: ComponentFile): Promise<Ang
       hostDirectives: properties[8],
       isSignal: parseString(properties[9]) === "true",
       // standalone & module are considered in the same folder for now
-      importPath: file.modulePath.slice(file.modulePath.indexOf(cwd) + cwd.length + 1),
+      importPath: file.modulePath,
       importName: standalone ? properties[0] : `${properties[0]}Module`,
-      file: file.path,
+      file: join(cwd, file.path),
+      type: "package",
     });
   });
 }
@@ -49,8 +50,8 @@ export async function extractPackageComponents(file: ComponentFile): Promise<Ang
 const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export[\s\t]+class[\s\t]+(\w+)/g;
 
 export async function extractLocalComponents(file: ComponentFile) {
-  const content = await readFile(join(getCurrentWorkspace(), file.path), "utf8");
   const cwd = getCurrentWorkspace();
+  const content = await readFile(join(cwd, file.path), "utf8");
   return getPatternMatches(content, LOCAL_COMPONENT_PATTERN).map(data => {
     const properties: any = parseObject(data[0]);
     const standalone = properties.standalone === "true";
@@ -68,6 +69,7 @@ export async function extractLocalComponents(file: ComponentFile) {
       importPath: standalone ? file.path : file.modulePath,
       importName: standalone ? data[1] : getModuleNameFromFile(file.modulePath),
       file: join(cwd, file.path),
+      type: "local",
     });
   });
 }
@@ -104,6 +106,7 @@ export class AngularComponent {
   public importPath: string;
   public importName: string;
   public file: string;
+  public type: "package" | "local";
 
   constructor(data: Partial<AngularComponent>) {
     Object.assign(this, data);
@@ -120,6 +123,11 @@ export class AngularComponent {
 //
 ////////////////////////////////////////////////////////////////////////////////
 export function getComponentImport(component: AngularComponent, dest: string) {
+  console.log("getComponentImport", component, dest);
+  if (component.type === "package") {
+    return `import { ${component.importName} } from "${component.importPath}";`;
+  }
+  // TODO: not component.file but importPath, change and fix the relative path issue
   return `import { ${component.importName} } from "${getRelativePath(component.file, dest).slice(0, -3)}";`;
 }
 
@@ -137,6 +145,7 @@ function parseSelectors(s: string) {
   return s.split(",").map(s => s.trim().replace(/['"]/g, ""));
 }
 
+// ex: example-name.module.ts --> ExampleNameModule
 function getModuleNameFromFile(filePath: string) {
   return basename(filePath, ".ts")
     .split(/[.-]/)

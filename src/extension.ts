@@ -1,9 +1,9 @@
 import * as vscode from "vscode";
-import { createTagsProvider, getLocalComponents, getPackagesComponents } from "./tags-provider";
+import { Commands, createCommand } from "./commands";
 import { Config } from "./env";
 import { onDidChangeConfiguration, onDidCreateFiles, onDidRenameFiles, onDidSaveTextDocument } from "./events";
+import { createTagsProvider, getLocalComponents, getPackagesComponents } from "./tags-provider";
 import { ExtensionData } from "./types";
-import { Commands, createCommand } from "./commands";
 
 export async function activate(context: vscode.ExtensionContext) {
   ////////////////////////////////////////////////////////////////////////////
@@ -35,6 +35,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // Commands
   //
   ////////////////////////////////////////////////////////////////////////////
+
   const commands = [createCommand(Commands.ComponentImport, data)];
   context.subscriptions.push(...commands);
 

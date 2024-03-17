@@ -1,8 +1,8 @@
+import { readFile, writeFile } from "fs/promises";
 import { join } from "path";
+import * as vscode from "vscode";
 import { AngularComponent, getComponentImport } from "./components";
 import { getCurrentActiveFile, getCurrentWorkspace } from "./env";
-import * as vscode from "vscode";
-import { readFile, writeFile } from "fs/promises";
 import { ExtensionCommand, ExtensionData } from "./types";
 
 export const Commands: Record<string, ExtensionCommand> = {

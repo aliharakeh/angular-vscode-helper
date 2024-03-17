@@ -61,3 +61,22 @@ export function createProgressBar(message: string, action: ProgressAction, onCan
     }
   );
 }
+
+export async function actionWithProgress<ResultType>(props: {
+  title: string;
+  show?: boolean;
+  args?: any[];
+  initialValue: any;
+  action: any;
+}) {
+  let res: ResultType = props.initialValue;
+  props.args = props.args ?? [];
+  if (props.show) {
+    await createProgressBar("Indexing UI Packages Components", async () => {
+      res = await props.action(...props.args);
+    });
+  } else {
+    res = await props.action(...props.args);
+  }
+  return res;
+}

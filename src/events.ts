@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
 import { Config, Env } from "./env";
 import { getLocalComponents, getPackagesComponents } from "./tags-provider";
-import { debounce } from "./utils";
 import { ExtensionData } from "./types";
+import { debounce } from "./utils";
 
 ////////////////////////////////////////////////////////////////////////////////
 //
