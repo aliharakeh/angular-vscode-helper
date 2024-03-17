@@ -1,8 +1,8 @@
-import * as vscode from "vscode";
-import { Config, Env } from "./env";
-import { getLocalComponents, getPackagesComponents } from "./tags-provider";
-import { ExtensionData } from "./types";
-import { debounce } from "./utils";
+import * as vscode from 'vscode';
+import { Env } from './env';
+import { getLocalComponents, getPackagesComponents } from './tags-provider';
+import { ExtensionData } from './types';
+import { debounce } from './utils';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -13,10 +13,10 @@ import { debounce } from "./utils";
 export const onDidChangeConfiguration = debounce(_onDidChangeConfiguration, 1000);
 
 async function _onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent, data: ExtensionData) {
-  console.log("change configuration");
-  if (e.affectsConfiguration(Env("UIComponentsPaths", true))) {
-    data.packagesComponents = await getPackagesComponents(Config<string[]>("UIComponentsPaths"));
-  }
+    console.log('change configuration');
+    if (e.affectsConfiguration(Env('UIComponentsPaths', true))) {
+        data.packagesComponents = await getPackagesComponents();
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -29,19 +29,19 @@ export const onDidCreateFiles = debounce(_onDidCreateFiles, 1000);
 export const onDidRenameFiles = debounce(_onDidRenameFiles, 1000);
 
 async function _onDidCreateFiles(e: vscode.FileCreateEvent, data: ExtensionData) {
-  console.log("add component file");
-  handleLocalChanges(
-    e.files.map(f => f.fsPath),
-    data
-  );
+    console.log('add component file');
+    handleLocalChanges(
+        e.files.map(f => f.fsPath),
+        data
+    );
 }
 
 async function _onDidRenameFiles(e: vscode.FileRenameEvent, data: ExtensionData) {
-  console.log("rename component file");
-  handleLocalChanges(
-    e.files.map(f => f.newUri.fsPath),
-    data
-  );
+    console.log('rename component file');
+    handleLocalChanges(
+        e.files.map(f => f.oldUri.fsPath),
+        data
+    );
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -53,8 +53,8 @@ async function _onDidRenameFiles(e: vscode.FileRenameEvent, data: ExtensionData)
 export const onDidSaveTextDocument = debounce(_onDidSaveTextDocument, 1000);
 
 async function _onDidSaveTextDocument(e: vscode.TextDocument, data: ExtensionData) {
-  console.log("save component file");
-  handleLocalChanges([e.uri.fsPath], data);
+    console.log('save component file');
+    handleLocalChanges([e.uri.fsPath], data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ async function _onDidSaveTextDocument(e: vscode.TextDocument, data: ExtensionDat
 ////////////////////////////////////////////////////////////////////////////////
 
 async function handleLocalChanges(paths: string[], data: ExtensionData) {
-  if (paths.some(p => p.includes(".component.ts"))) {
-    data.localComponents = await getLocalComponents();
-  }
+    if (paths.some(p => p.endsWith('.component.ts'))) {
+        data.localComponents = await getLocalComponents();
+    }
 }
