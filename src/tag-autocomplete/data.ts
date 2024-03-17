@@ -1,12 +1,11 @@
 import { AngularComponent } from './components';
 
-export type ExtensionData = {
+export type TagData = {
     packagesComponents: AngularComponent[];
     localComponents: AngularComponent[];
 };
 
-export type ExtensionCommand = {
-    id: string;
-    title: string;
-    callback: (...args: any[]) => any;
+export const data: TagData = {
+    packagesComponents: [],
+    localComponents: []
 };

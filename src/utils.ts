@@ -1,4 +1,5 @@
-import { opendir, stat } from 'fs/promises';
+import * as vscode from 'vscode';
+import { ExtensionCommand } from './tag-autocomplete/commands';
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -65,49 +66,6 @@ export type ComponentFile = {
     directory: string;
     modulePath?: string;
 };
-
-export async function getFiles(path: string, filter: (filename: string) => boolean = () => true) {
-    const files: ComponentFile[] = [];
-    const entries = await opendir(path);
-    for await (const entry of entries) {
-        if (entry.isFile() && filter(entry.name)) {
-            files.push({
-                path: entry.path,
-                name: entry.name,
-                directory: path,
-                modulePath: path
-            });
-        } else if (entry.isDirectory()) {
-            files.push(...(await getFiles(entry.path, filter)));
-        }
-    }
-    return files;
-}
-
-export function exists(path: string) {
-    return stat(path)
-        .then(() => true)
-        .catch(() => false);
-}
-
-export function buildDirectoryTree(files) {
-    const tree = {};
-    files.forEach(file => {
-        const parts = file.split(/[\\/]/);
-        let currentLevel = tree;
-        parts.forEach((part, index) => {
-            if (index === parts.length - 1) {
-                // If it's the last part, it's a file, so we add it to the current level
-                currentLevel[part] = true;
-            } else {
-                // If it's not the last part, it's a directory, so we ensure it exists in the tree
-                currentLevel[part] = currentLevel[part] || {};
-                currentLevel = currentLevel[part];
-            }
-        });
-    });
-    return tree;
-}
 
 export function getRelativePath(src: string, dest: string) {
     let srcParts = src.split(/[\\/]/);
@@ -231,6 +189,7 @@ export function isKebabCase(input: string) {
 // Helpers
 //
 ////////////////////////////////////////////////////////////////////////////////
+
 export function debounce(func, timeout = 300) {
     let timer;
     return (...args) => {
@@ -239,4 +198,62 @@ export function debounce(func, timeout = 300) {
             func(...args);
         }, timeout);
     };
+}
+
+////////////////////////////////////////////////////////////////////////////////
+//
+// vscode
+//
+////////////////////////////////////////////////////////////////////////////////
+
+export function getCurrentWorkspace() {
+    return vscode.workspace.workspaceFolders[0].uri.fsPath;
+}
+
+export function getCurrentActiveFile() {
+    return vscode.window.activeTextEditor?.document.fileName;
+}
+
+export type ProgressAction = (
+    progress: vscode.Progress<{ message?: string; increment?: number }>,
+    token: vscode.CancellationToken
+) => Promise<void>;
+
+export function createProgressBar(message: string, action: ProgressAction, onCancel?: () => void) {
+    return vscode.window.withProgress(
+        {
+            location: vscode.ProgressLocation.Notification,
+            title: message,
+            cancellable: onCancel !== undefined
+        },
+        async (progress, token) => {
+            if (onCancel !== undefined) {
+                token.onCancellationRequested(() => onCancel());
+            }
+            await action(progress, token);
+        }
+    );
+}
+
+export async function actionWithProgress<ResultType>(props: {
+    title: string;
+    show?: boolean;
+    args?: any[];
+    initialValue: any;
+    action: any;
+}) {
+    let res: ResultType = props.initialValue;
+    props.args = props.args ?? [];
+    if (props.show) {
+        await createProgressBar('Indexing UI Packages Components', async () => {
+            res = await props.action(...props.args);
+        });
+    } else {
+        res = await props.action(...props.args);
+    }
+    return res;
+}
+
+export function createCommand(command: ExtensionCommand) {
+    return vscode.commands.registerCommand(command.id, command.action);
 }
