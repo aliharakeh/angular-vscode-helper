@@ -24,12 +24,10 @@ export class TagsProvider {
     }
 
     setEvents() {
-        vscode.workspace.onDidChangeConfiguration(e =>
-            debounce(_ => onDidChangeConfiguration(e), 1000)
-        );
-        vscode.workspace.onDidCreateFiles(e => debounce(_ => onDidCreateFiles(e), 1000));
-        vscode.workspace.onDidRenameFiles(e => debounce(_ => onDidRenameFiles(e), 1000));
-        vscode.workspace.onDidSaveTextDocument(e => debounce(_ => onDidSaveTextDocument(e), 1000));
+        vscode.workspace.onDidChangeConfiguration(debounce(onDidChangeConfiguration, 1000));
+        vscode.workspace.onDidCreateFiles(debounce(onDidCreateFiles, 1000));
+        vscode.workspace.onDidRenameFiles(debounce(onDidRenameFiles, 1000));
+        vscode.workspace.onDidSaveTextDocument(debounce(onDidSaveTextDocument, 1000));
     }
 
     registerProviders() {

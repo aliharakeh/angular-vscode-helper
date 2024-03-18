@@ -12,21 +12,21 @@ export async function onDidChangeConfiguration(e: vscode.ConfigurationChangeEven
 
 export async function onDidCreateFiles(e: vscode.FileCreateEvent) {
     console.log('add component file');
-    handleLocalChanges(e.files.map(f => f.fsPath));
+    handleLocalChanges(e.files.filter(f => f.fsPath.endsWith('.component.ts'))?.[0].fsPath);
 }
 
 export async function onDidRenameFiles(e: vscode.FileRenameEvent) {
     console.log('rename component file');
-    handleLocalChanges(e.files.map(f => f.oldUri.fsPath));
+    handleLocalChanges(e.files[0].newUri.fsPath);
 }
 
 export async function onDidSaveTextDocument(e: vscode.TextDocument) {
     console.log('save component file');
-    handleLocalChanges([e.uri.fsPath]);
+    handleLocalChanges(e.uri.fsPath);
 }
 
-async function handleLocalChanges(paths: string[]) {
-    if (paths.some(p => p.endsWith('.component.ts'))) {
+async function handleLocalChanges(path: string) {
+    if (path &&path.endsWith('.component.ts')) {
         data.localComponents = await getLocalComponents();
     }
 }
