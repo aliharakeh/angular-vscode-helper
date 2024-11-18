@@ -20,10 +20,15 @@ export const Commands: Record<string, ExtensionCommand> = {
 
 export async function autoImportCommand(component: AngularComponent) {
     const hostFile = getCurrentActiveFile().replace('.html', '.ts');
+
     const hostComponent = data.localComponents.find(c => c.file === hostFile);
+
     const editedFile = join(getCurrentWorkspace(), hostComponent.importPath);
+
     const componentImport = component.getImportFor(editedFile);
+
     const content = await readFile(editedFile, 'utf8');
+
     const newContent = [
         componentImport,
         content.replace(/imports:\s+\[([\w,\s\n]*?)\],/, (_, imports) => {
@@ -35,5 +40,6 @@ export async function autoImportCommand(component: AngularComponent) {
             ].join('');
         })
     ].join('\n');
+    
     await writeFile(editedFile, newContent, 'utf8');
 }

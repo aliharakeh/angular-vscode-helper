@@ -38,7 +38,9 @@
 		"package": "vsce package --allow-missing-repository --allow-star-activation"
 	},
 	"dependencies": {
-		"glob": "^10.3.10"
+		"acron": "^1.0.5",
+		"glob": "^10.3.10",
+		"ts-morph": "^24.0.0"
 	},
 	"devDependencies": {
 		"@angular/material": "^17.1.0",

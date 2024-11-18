@@ -1,5 +1,19 @@
 import { getCurrentWorkspace, getRelativePath, isKebabCase } from '../../utils';
 
+type ImportMap = {
+    [key: string]:
+        | string
+        | {
+              alias: string | null;
+              required: boolean;
+          };
+};
+
+type OutputMap = {
+    [key: string]: string;
+};
+
+
 export class AngularComponent {
     public component: string;
     public selectors: string[];
@@ -35,16 +49,3 @@ export class AngularComponent {
         ).replace('.ts', '')}";`;
     }
 }
-
-type ImportMap = {
-    [key: string]:
-        | string
-        | {
-              alias: string | null;
-              required: boolean;
-          };
-};
-
-type OutputMap = {
-    [key: string]: string;
-};

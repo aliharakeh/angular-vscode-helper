@@ -26,7 +26,7 @@ export async function onDidSaveTextDocument(e: vscode.TextDocument) {
 }
 
 async function handleLocalChanges(path: string) {
-    if (path &&path.endsWith('.component.ts')) {
+    if (path && path.endsWith('.component.ts')) {
         data.localComponents = await getLocalComponents();
     }
 }

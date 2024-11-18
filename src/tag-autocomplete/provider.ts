@@ -16,14 +16,14 @@ export class TagsProvider {
 
     async init(context: vscode.ExtensionContext) {
         this.context = context;
-        this.setEvents();
+        this.registerEvents();
         this.registerCommands();
         this.registerProviders();
         data.localComponents = await this.loadLocalComponents();
         data.packagesComponents = await this.loadPackagesComponents();
     }
 
-    setEvents() {
+    registerEvents() {
         vscode.workspace.onDidChangeConfiguration(debounce(onDidChangeConfiguration, 1000));
         vscode.workspace.onDidCreateFiles(debounce(onDidCreateFiles, 1000));
         vscode.workspace.onDidRenameFiles(debounce(onDidRenameFiles, 1000));
