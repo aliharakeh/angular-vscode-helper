@@ -38,9 +38,7 @@
 		"package": "vsce package --allow-missing-repository --allow-star-activation"
 	},
 	"dependencies": {
-		"acron": "^1.0.5",
-		"glob": "^10.3.10",
-		"ts-morph": "^24.0.0"
+		"glob": "^10.3.10"
 	},
 	"devDependencies": {
 		"@angular/material": "^17.1.0",
@@ -51,6 +49,7 @@
 		"@vscode/vsce": "^2.24.0",
 		"esbuild": "^0.20.1",
 		"eslint": "^8.57.0",
-		"typescript": "^5.3.2"
+		"typescript": "^5.3.2",
+		"ts-morph": "^24.0.0"
 	}
 }
