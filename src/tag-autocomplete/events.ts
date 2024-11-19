@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { Env } from '../settings';
-import { getLocalComponents, getPackagesComponents } from './components';
+import { getLocalComponents } from './components/local';
+import { getPackagesComponents } from './components/packages';
 import { data } from './data';
 
 export async function onDidChangeConfiguration(e: vscode.ConfigurationChangeEvent) {

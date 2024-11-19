@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { tagsAutocomplete } from './tag-autocomplete';
+import { TagsProvider } from './tag-autocomplete/provider';
 
 export async function activate(context: vscode.ExtensionContext) {
-    await tagsAutocomplete.init(context);
+    await TagsProvider.init(context);
 }

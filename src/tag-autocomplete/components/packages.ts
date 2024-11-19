@@ -49,28 +49,39 @@ export async function getPackagesComponents() {
 
 async function extractPackageFileComponents(file: ComponentFile) {
     const cwd = join(getCurrentWorkspace(), 'node_modules');
-    const content = await readFile(join(cwd, file.path), 'utf8');
-    const components = getPatternMatches(content, PACKAGE_COMPONENT_PATTERN);
-    return components.map(d => parseComponent(d, cwd, file));
+    const fileContent = await readFile(join(cwd, file.path), 'utf8');
+    return getPatternMatches(fileContent, PACKAGE_COMPONENT_PATTERN).map(d => parseComponent(d, cwd, file));
 }
 
 function parseComponent(data: any, cwd: string, file: ComponentFile): AngularComponent {
-    const properties = parseProperties(data[0]);
-    const standalone = parseString(properties[7]) === 'true';
+    const [
+        component,
+        selectors,
+        exportAs,
+        inputMap,
+        outputMap,
+        queryFields,
+        ngContentSelectors,
+        standalone,
+        hostDirectives,
+        isSignal
+    ] = parseProperties(data[0]);
+
+    const isStandalone = parseString(standalone) === 'true';
+
     return new AngularComponent({
-        component: properties[0],
-        selectors: parseSelectors(properties[1]),
-        exportAs: parseArray(properties[2]),
-        inputMap: parseObject(properties[3], s => s.replaceAll(';', ',')),
-        outputMap: parseObject(properties[4], s => s.replaceAll(';', ',')),
-        queryFields: parseArray(properties[5]),
-        ngContentSelectors: parseArray(properties[6]),
-        isStandalone: standalone,
-        hostDirectives: properties[8],
-        isSignal: parseString(properties[9]) === 'true',
-        // standalone & module are considered in the same folder for now
-        importPath: file.modulePath,
-        importName: standalone ? properties[0] : `${properties[0]}Module`,
+        component: component,
+        selectors: parseSelectors(selectors),
+        exportAs: parseArray(exportAs),
+        inputMap: parseObject(inputMap, s => s.replaceAll(';', ',')),
+        outputMap: parseObject(outputMap, s => s.replaceAll(';', ',')),
+        queryFields: parseArray(queryFields),
+        ngContentSelectors: parseArray(ngContentSelectors),
+        isStandalone,
+        hostDirectives,
+        isSignal: parseString(isSignal) === 'true',
+        importPath: file.modulePath, // consider standalone & module are in the same package component directory for now
+        importName: isStandalone ? component : `${component}Module`,
         file: join(cwd, file.path),
         type: 'package'
     });

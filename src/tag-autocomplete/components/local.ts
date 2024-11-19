@@ -4,8 +4,7 @@ import { basename, dirname, join } from 'path';
 import { ComponentFile, getCurrentWorkspace, getPatternMatches, parseObject } from '../../utils';
 import { AngularComponent } from './angular-component';
 
-const LOCAL_COMPONENT_PATTERN =
-    /@Component\(([\s\S\n]+?)\)[\s\n\t]+export[\s\t]+class[\s\t]+(\w+)/g;
+const LOCAL_COMPONENT_PATTERN = /@Component\(([\s\S\n]+?)\)[\s\n\t]+export[\s\t]+class[\s\t]+(\w+)/g;
 
 /**
  * iterate all local paths and extract component definitions from the `component.ts` files while also getting all
@@ -72,22 +71,25 @@ function getNearestModulePath(parentDir: string, modulesFilesMap: any): string {
 
 function parseComponent(data: any, cwd: string, file: ComponentFile): AngularComponent {
     const properties: any = parseObject(data[0]);
-    const standalone = properties.standalone === 'true';
+    const component = data[1];
+    const isStandalone = properties.standalone === 'true';
     return new AngularComponent({
-        component: data[1],
+        component,
         selectors: properties.selector?.split(',').map(s => s.trim()) || [],
         exportAs: properties.exportAs,
         inputMap: properties.inputs,
         outputMap: properties.outputs,
         queryFields: null,
         ngContentSelectors: null,
-        isStandalone: standalone,
+        isStandalone,
         hostDirectives: null,
         isSignal: false,
-        importPath: standalone ? file.path : file.modulePath,
-        importName: standalone ? data[1] : getModuleNameFromFile(file.modulePath),
+        importPath: isStandalone ? file.path : file.modulePath,
+        importName: isStandalone ? component : getModuleNameFromFile(file.modulePath),
         file: join(cwd, file.path),
-        type: 'local'
+        type: 'local',
+        templateUrl: properties.templateUrl,
+        isLocal: true
     });
 }
 

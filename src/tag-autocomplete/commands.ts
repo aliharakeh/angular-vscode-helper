@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
 import { getCurrentActiveFile, getCurrentWorkspace } from '../utils';
-import { AngularComponent } from './components';
+import { AngularComponent } from './components/angular-component';
 import { data } from './data';
 
 export type ExtensionCommand = {
@@ -18,28 +18,38 @@ export const Commands: Record<string, ExtensionCommand> = {
     }
 };
 
-export async function autoImportCommand(component: AngularComponent) {
-    const hostFile = getCurrentActiveFile().replace('.html', '.ts');
+export async function autoImportCommand(snippetComponent: AngularComponent) {
+    const currentFile = getCurrentActiveFile();
 
-    const hostComponent = data.localComponents.find(c => c.file === hostFile);
+    // get the current active host component that will import the component snippet
+    let activeHostComponent: AngularComponent;
+    if (currentFile.endsWith('.ts')) {
+        activeHostComponent = data.localComponents.find(c => c.file === currentFile);
+    } else if (currentFile.endsWith('.html')) {
+        activeHostComponent = data.localComponents.find(c => currentFile.includes(c.templateUrl));
+    }
 
-    const editedFile = join(getCurrentWorkspace(), hostComponent.importPath);
+    // get active host component path
+    const activeHostComponentPath = join(getCurrentWorkspace(), activeHostComponent.importPath);
 
-    const componentImport = component.getImportFor(editedFile);
+    // get snippet component import
+    const componentImport = snippetComponent.getImportFor(activeHostComponentPath);
 
-    const content = await readFile(editedFile, 'utf8');
+    // get active host component content
+    const content = await readFile(activeHostComponentPath, 'utf8');
 
+    // replace active host component imports and add the new snippet component import
     const newContent = [
         componentImport,
         content.replace(/imports:\s+\[([\w,\s\n]*?)\],/, (_, imports) => {
             const hasImports = !!imports.trim();
             return [
                 'imports: [' + imports,
-                hasImports ? ', ' + component.importName : component.importName,
+                hasImports ? ', ' + snippetComponent.importName : snippetComponent.importName,
                 '],'
             ].join('');
         })
     ].join('\n');
-    
-    await writeFile(editedFile, newContent, 'utf8');
+
+    await writeFile(activeHostComponentPath, newContent, 'utf8');
 }

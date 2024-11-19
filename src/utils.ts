@@ -35,10 +35,7 @@ export function commaSplit(content: string) {
             stack.push(char);
         }
         // remove the last element from the stack if the current character is the closing symbol of the last element
-        else if (
-            SYMBOLS[stack[stack.length - 1]] === char ||
-            (char === '"' && stack[stack.length - 1] === '"')
-        ) {
+        else if (SYMBOLS[stack[stack.length - 1]] === char || (char === '"' && stack[stack.length - 1] === '"')) {
             stack.pop();
         }
 
@@ -80,7 +77,11 @@ export function getRelativePath(src: string, dest: string) {
     destParts = destParts.slice(i);
     // Add .. for each difference and build the path
     return destParts
-        .map((_, i) => (i === 0 ? '.' : i === destParts.length - 1 ? '' : '..'))
+        .map((_, i) =>
+            i === 0 ? '.'
+            : i === destParts.length - 1 ? ''
+            : '..'
+        )
         .concat(srcParts as any)
         .join('/');
 }
