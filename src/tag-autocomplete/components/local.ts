@@ -32,9 +32,7 @@ export async function getLocalComponents() {
 
     // extract components
     for (const componentFile of componentFiles) {
-        let parentDir = dirname(componentFile);
-
-        const nearestModule = getNearestModulePath(parentDir, modulesFilesMap);
+        const [parentDir, nearestModule] = getNearestModulePath(dirname(componentFile), modulesFilesMap);
 
         const fileData: ComponentFile = {
             path: componentFile,
@@ -57,7 +55,7 @@ async function extractLocalFileComponents(file: ComponentFile) {
     return getPatternMatches(fileContent, LOCAL_COMPONENT_PATTERN).map(d => parseComponent(d, cwd, file));
 }
 
-function getNearestModulePath(parentDir: string, modulesFilesMap: any): string {
+function getNearestModulePath(parentDir: string, modulesFilesMap: any): string[] {
     let nearestModule = modulesFilesMap[parentDir];
     while (!nearestModule) {
         parentDir = dirname(parentDir);
@@ -66,13 +64,13 @@ function getNearestModulePath(parentDir: string, modulesFilesMap: any): string {
             break;
         }
     }
-    return nearestModule;
+    return [parentDir, nearestModule];
 }
 
 function parseComponent(data: any, cwd: string, file: ComponentFile): AngularComponent {
     const properties: any = parseObject(data[0]);
     const component = data[1];
-    const isStandalone = properties.standalone === 'true';
+    const isStandalone = properties.standalone === 'true' || (file.modulePath ? false : true);
     return new AngularComponent({
         component,
         selectors: properties.selector?.split(',').map(s => s.trim()) || [],
@@ -88,8 +86,7 @@ function parseComponent(data: any, cwd: string, file: ComponentFile): AngularCom
         importName: isStandalone ? component : getModuleNameFromFile(file.modulePath),
         file: join(cwd, file.path),
         type: 'local',
-        templateUrl: properties.templateUrl,
-        isLocal: true
+        templateUrl: properties.templateUrl
     });
 }
 

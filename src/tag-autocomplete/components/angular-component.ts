@@ -29,7 +29,6 @@ export class AngularComponent {
     public file: string;
     public type: 'package' | 'local';
     public templateUrl: string;
-    public isLocal: boolean = false;
 
     constructor(data: Partial<AngularComponent>) {
         Object.assign(this, data);

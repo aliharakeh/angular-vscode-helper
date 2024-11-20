@@ -1,4 +1,4 @@
-import { AngularComponent } from './components';
+import { AngularComponent } from './components/angular-component';
 
 export type TagData = {
     packagesComponents: AngularComponent[];

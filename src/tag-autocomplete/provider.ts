@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import { Config } from '../settings';
-import { actionWithProgress, createCommand, debounce } from '../utils';
+import { actionWithProgress, createCommand } from '../utils';
 import { Commands } from './commands';
 import { AngularComponent } from './components/angular-component';
 import { getLocalComponents } from './components/local';
 import { getPackagesComponents } from './components/packages';
 import { data } from './data';
-import { onDidChangeConfiguration, onDidCreateFiles, onDidRenameFiles, onDidSaveTextDocument } from './events';
+import { onDidChangeConfiguration, onDidCreateFiles, onDidRenameFiles } from './events';
 
 export type TagsProviderType = {
     context: vscode.ExtensionContext;
@@ -34,7 +34,7 @@ export const TagsProvider: TagsProviderType = {
         vscode.workspace.onDidChangeConfiguration(onDidChangeConfiguration);
         vscode.workspace.onDidCreateFiles(onDidCreateFiles);
         vscode.workspace.onDidRenameFiles(onDidRenameFiles);
-        vscode.workspace.onDidSaveTextDocument(debounce(onDidSaveTextDocument, 1000));
+        // vscode.workspace.onDidSaveTextDocument(debounce(onDidSaveTextDocument, 5000));
     },
 
     registerProviders() {
@@ -78,7 +78,7 @@ export function createTagsProvider() {
                     );
 
                     // within a class and not a template
-                    if (allPreviousText.includes('export class')) {
+                    if (!allPreviousText.includes('template:') || allPreviousText.includes('export class')) {
                         return [];
                     }
                 }
@@ -89,13 +89,13 @@ export function createTagsProvider() {
                 const prevChar = document.lineAt(position.line).text.charAt(position.character - 1);
 
                 // if last character is "<" then no need to add "<" to the tag
-                const prefix = prevChar === '<' ? '' : '<';
+                // const prefix = prevChar === '<' ? '' : '<';
 
                 return components.map(c => {
                     const selector = c.getSelector();
                     const label = `${selector} (${c.importPath})`;
                     const completionItem = new vscode.CompletionItem(label, vscode.CompletionItemKind.Snippet);
-                    completionItem.insertText = new vscode.SnippetString(`${prefix}${selector}>$1</${selector}>`);
+                    completionItem.insertText = new vscode.SnippetString(`${selector}>$1</${selector}>`);
 
                     // execute auto import command
                     const command = Commands.ComponentImport;

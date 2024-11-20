@@ -65,25 +65,21 @@ export type ComponentFile = {
 };
 
 export function getRelativePath(src: string, dest: string) {
-    let srcParts = src.split(/[\\/]/);
-    let destParts = dest.split(/[\\/]/);
+    const srcParts = src.split(/[\\/]/);
+    const destParts = dest.split(/[\\/]/);
+    const commonLength = Math.min(srcParts.length, destParts.length);
     let i = 0;
     // Find the first difference
-    while (i < srcParts.length && i < destParts.length && srcParts[i] === destParts[i]) {
+    while (i < commonLength && srcParts[i] === destParts[i]) {
         i++;
     }
     // remove common parts
-    srcParts = srcParts.slice(i);
-    destParts = destParts.slice(i);
-    // Add .. for each difference and build the path
-    return destParts
-        .map((_, i) =>
-            i === 0 ? '.'
-            : i === destParts.length - 1 ? ''
-            : '..'
-        )
-        .concat(srcParts as any)
+    const relativeParts = destParts.slice(i);
+    const relativePath = relativeParts
+        .map((_, j) => (j === 0 ? '.' : '..'))
+        .concat(srcParts.slice(i) as any)
         .join('/');
+    return relativePath;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
